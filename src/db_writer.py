@@ -10,4 +10,4 @@ def write_to_db(data):
         data (pd.DataFrame): Validated data.
     """
     # Future: Add real DB logic here
-    log_event("DB writer called (no DB actions taken)")
+    log_event("DB writer called (no DB actions taken)","EVENT")
