@@ -1,0 +1,8 @@
+[2025-04-09 12:33:26] Successfully loaded data from sample_data/example1.csv
+[2025-04-09 12:33:26] Validation module called (no rules applied)
+[2025-04-09 12:33:26] DB writer called (no DB actions taken)
+[2025-04-09 12:33:26] Ingestion complete.
+[2025-04-09 12:43:59] Successfully loaded data from sample_data/example1.csv
+[2025-04-09 12:43:59] Validation module called (no rules applied)
+[2025-04-09 12:43:59] DB writer called (no DB actions taken)
+[2025-04-09 12:43:59] Ingestion complete.
