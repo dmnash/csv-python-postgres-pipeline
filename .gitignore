@@ -9,9 +9,6 @@ env/
 ENV/
 venv/
 
-# Logs
-logs/*.txt
-
 # OS/System Files
 .DS_Store
 Thumbs.db
@@ -24,7 +21,12 @@ Thumbs.db
 .ipynb_checkpoints/
 
 # CSV Samples
-sample_data/*.csv
+sample_data/*
+!sample_data/.keep
+
+# Logs
+logs/*
+!logs/.keep
 
 # Environment Files
 .env
