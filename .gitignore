@@ -1,0 +1,30 @@
+# Python Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+.venv/
+env/
+ENV/
+venv/
+
+# Logs
+logs/*.txt
+
+# OS/System Files
+.DS_Store
+Thumbs.db
+
+# IDE/Editor Directories
+.vscode/
+.idea/
+
+# Jupyter Notebooks (if used)
+.ipynb_checkpoints/
+
+# CSV Samples
+sample_data/*.csv
+
+# Environment Files
+.env
