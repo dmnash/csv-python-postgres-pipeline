@@ -1,0 +1,23 @@
+{
+    "runtime_config": {
+        "config_item1": "value",
+        "config_item2": "value",
+        "config_item3": "value",
+        "config_item4": "value",
+        "log_config": {
+            "log_setting1": "value",
+            "log_setting2": "value",
+            "log_setting3": "value",
+            "log_setting4": "value"
+        }
+    },
+    "db_config": {
+      "host": "localhost",
+      "port": 5432,
+      "name": "my_database",
+      "user": "my_username",
+      "password": "my_password",
+      "table": "orders"
+    },
+    "schema_path": "config/schema.json"
+}

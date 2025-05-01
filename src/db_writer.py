@@ -2,7 +2,7 @@
 
 from src.logger import log_event
 
-def write_to_db(data):
+def write_to_db(runtime_config, db_config, cleaned_data):
     """
     Placeholder database write function.
 

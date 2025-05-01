@@ -30,3 +30,6 @@ logs/*
 
 # Environment Files
 .env
+
+# Internal DOcumentation
+internal_docs/

@@ -1,0 +1,52 @@
+{
+    "primary_key": "order_id",
+    "group_reject": true,
+    "schema_definitions": {
+        "order_id": {
+        "required": true,
+        "custom_validator": "check_rejected_order",
+        "rules": {
+            "regex": "^\\d{3}-\\d{4}-\\d{3}-\\d{14}$",
+            "forbidden_values": ["UNKNOWN", "N/A"]
+        }
+        },
+        "item_id": {
+        "required": true,
+        "rules": {
+            "regex": "^ITEM\\d{4}$"
+        }
+        },
+        "item_name": {
+        "required": true,
+        "rules": {}
+        },
+        "quantity": {
+        "required": true,
+        "rules": {
+            "data_type": "int",
+            "min_value": 1
+        }
+        },
+        "unit_price": {
+        "required": true,
+        "rules": {
+            "data_type": "float",
+            "min_value": 0.0
+        }
+        },
+        "order_date": {
+        "required": true,
+        "rules": {
+            "data_type": "date"
+        }
+        },
+        "shipping_method": {
+        "required": false,
+        "rules": {}
+        },
+        "discount_code": {
+        "required": false,
+        "rules": {}
+        }
+    }
+}    

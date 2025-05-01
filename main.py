@@ -1,26 +1,43 @@
 # main.py
 
 import sys
+import json
 from src.file_loader import load_csv
 from src.validator import validate_data
 from src.db_writer import write_to_db
 from src.logger import log_event
 
 def main(csv_path="sample_data/example1.csv"):
-    # Step 1: Load raw data from a CSV file
-    raw_data = load_csv(csv_path)
+    # load config
+    with open("config/config.json", "r") as f:
+        config = json.load(f)
+
+    runtime_config = config["runtime_config"]
+    db_config = config["db_config"]
+    schema_path = config["schema_path"]
+
+    # load schema
+    with open(schema_path, "r") as f:
+        schema = json.load(f)
+
+    primary_key = schema["primary_key"]
+    group_reject = schema["group_reject"]
+    schema_definitions = schema["schema_definitions"]
+
+    # Load raw data from a CSV file
+    raw_data = load_csv(runtime_config, schema_definitions, csv_path)
     if raw_data is None:
         log_event("Aborting pipeline: no data loaded.","ERROR")
         return
 
-    # Step 2: Validate and clean the data
-    cleaned_data = validate_data(raw_data)
+    # Validate and clean the data
+    cleaned_data = validate_data(runtime_config, schema_definitions, group_reject, primary_key, raw_data)
 
-    # Step 3: Write validated data to the database
-    write_to_db(cleaned_data)
+    # Write validated data to the database
+    write_to_db(runtime_config, db_config, cleaned_data)
 
-    # Step 4: Log completion
-    log_event("Ingestion complete.","INGEST")
+    # Log completion
+    log_event(runtime_config, "Ingestion complete.","INGEST")
 
 if __name__ == "__main__":
     # Accept a filepath as a command-line argument, fallback to default

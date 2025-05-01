@@ -11,7 +11,7 @@ log_library = {
 
 EXCEPTION_LOG = os.path.join("logs", "exception_log.txt")
 
-def log_event(message, log_type):
+def log_event(runtime_config, message, log_type):
     """
     Append a timestamped message to the log.
 
