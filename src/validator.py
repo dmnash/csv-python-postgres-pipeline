@@ -18,7 +18,10 @@ def forbidden_value():
 def valid_datatype():
     pass # this will be the data type validation test
 
-def validate_data(runtime_config, schema_definitions, group_reject, primary_key, raw_data):
+def validate_data(runtime_config, schema, raw_data):
+    primary_key = schema["primary_key"]
+    group_reject = schema["group_reject"]
+    schema_definitions = schema["schema_definitions"]
     sorted_data = raw_data.sort_values(by=primary_key, na_position="first")
     grouped_data = sorted_data.groupby(primary_key)
     valid_data = []

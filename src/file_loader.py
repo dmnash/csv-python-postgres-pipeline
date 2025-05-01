@@ -3,7 +3,7 @@
 import pandas
 from src.logger import log_event
 
-def load_csv(runtime_config, schema_definitions, csv_path):
+def load_csv(runtime_config, schema_keys, csv_path):
     """
     Load a CSV file and return a pandas DataFrame.
     """

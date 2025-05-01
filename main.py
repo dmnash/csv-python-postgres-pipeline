@@ -19,19 +19,16 @@ def main(csv_path="sample_data/example1.csv"):
     # load schema
     with open(schema_path, "r") as f:
         schema = json.load(f)
-
-    primary_key = schema["primary_key"]
-    group_reject = schema["group_reject"]
-    schema_definitions = schema["schema_definitions"]
+    schema_keys = list(schema["schema_definitions"].keys())
 
     # Load raw data from a CSV file
-    raw_data = load_csv(runtime_config, schema_definitions, csv_path)
+    raw_data = load_csv(runtime_config, schema_keys, csv_path)
     if raw_data is None:
         log_event("Aborting pipeline: no data loaded.","ERROR")
         return
 
     # Validate and clean the data
-    cleaned_data = validate_data(runtime_config, schema_definitions, group_reject, primary_key, raw_data)
+    cleaned_data = validate_data(runtime_config, schema, raw_data)
 
     # Write validated data to the database
     write_to_db(runtime_config, db_config, cleaned_data)
