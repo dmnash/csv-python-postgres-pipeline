@@ -19,7 +19,7 @@ def main(csv_path="sample_data/example1.csv"):
     # load schema
     with open(schema_path, "r") as f:
         schema = json.load(f)
-    schema_keys = list(schema["schema_definitions"].keys())
+    schema_keys = set(schema["schema_definitions"].keys())
 
     # Load raw data from a CSV file
     raw_data = load_csv(runtime_config, schema_keys, csv_path)
