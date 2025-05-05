@@ -1,4 +1,4 @@
-# === main.py ===
+# main.py
 
 import sys
 import json
@@ -7,7 +7,7 @@ from src.validator import validate_data
 from src.db_writer import write_to_db
 from src.logger import log_event
 
-def main(csv_path="sample_data/example1.csv"):
+def main(csv_path="sample_data/stresstest1.csv"):
     # load config
     with open("config/config.json", "r") as f:
         config = json.load(f)
@@ -25,7 +25,7 @@ def main(csv_path="sample_data/example1.csv"):
     # Load raw data from a CSV file
     raw_data = load_csv(runtime_config, schema_keys)
     if raw_data is None:
-        log_event("Aborting pipeline: no data loaded.","ERROR")
+        log_event(runtime_config, "Aborting pipeline: no data loaded.","ERROR")
         return
 
     # Validate and clean the data

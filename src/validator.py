@@ -1,5 +1,6 @@
-#validator.py
+# validator.py
 
+import re
 import pandas as pd
 from src.logger import log_event
 
@@ -13,32 +14,55 @@ def error_handler(rule_func):
 
 @error_handler
 def exist_notnull(schema_rule, test_value):
-    check_result = False
+    check_result = True
     check_msg = ""
+    if not schema_rule:
+        return check_result, check_msg
+    if test_value is None or pd.isnull(test_value):
+        check_result = False
+        check_msg = "Value is missing or null"
     return check_result, check_msg # this will be the exists-and-not-null function that required fields all apply
 
 @error_handler
 def format_compliance(schema_rule, test_value):
-    check_result = False
+    check_result = True
     check_msg = ""
+    if not re.match(schema_rule, str(test_value)):
+        check_result = False
+        check_msg = f"{test_value} does not adhere to format {schema_rule}"
     return check_result, check_msg # this will be the regex format compliance test
 
 @error_handler
 def permitted_value(schema_rule, test_value):
-    check_result = False
+    check_result = True
     check_msg = ""
+    if schema_rule.get("accepted_value") is not None and test_value not in schema_rule["accepted_value"]:
+        check_result = False
+        check_msg = f"{test_value} is not an accepted value"
+    if schema_rule.get("forbidden_value") is not None and test_value in schema_rule["forbidden_value"]:
+        check_result = False
+        check_msg = f"{test_value} is a forbidden value"
     return check_result, check_msg # this will be the accepted values and forbidden values tests
 
 @error_handler
 def valid_datatype(schema_rule, test_value):
-    check_result = False
+    check_result = True
     check_msg = ""
+    if type(test_value) != schema_rule:
+        check_result = False
+        check_msg = f"{test_value} is an invalid data type"
     return check_result, check_msg # this will be the data type validation test
 
 @error_handler
 def limit_value(schema_rule, test_value):
-    check_result = False
+    check_result = True
     check_msg = ""
+    if schema_rule.get("min") is not None and test_value < schema_rule["min"]:
+        check_result = False
+        check_msg = f"{test_value} below minimum tolerance {schema_rule['min']}"
+    if schema_rule.get("max") is not None and test_value < schema_rule["max"]:
+        check_result = False
+        check_msg = f"{test_value} below minimum tolerance {schema_rule['max']}"
     return check_result, check_msg # this will be the min/max value test
 
 dispatch_table = {

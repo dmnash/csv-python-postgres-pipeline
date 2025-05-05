@@ -18,6 +18,7 @@ def log_event(runtime_config, message, log_type):
     Args:
         message (str): The log message to record.
     """
+    log_config = runtime_config["log_config"]
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     entry = f"[{timestamp}] {message}\n"
 
@@ -40,6 +41,15 @@ if __name__ == "__main__":
     if len(sys.argv) >= 3:
         message = sys.argv[1]
         log_type = sys.argv[2]
-        log_event(message, log_type)
+        runtime_config = {
+            "log_config": {
+                "console_log": True,
+                "file_log": False
+            },
+            "file_info": {
+                "path": "manual"
+            }
+        }
+        log_event(runtime_config, message, log_type)
     else:
         print("Usage: python src/logger.py <message> <log_type>")

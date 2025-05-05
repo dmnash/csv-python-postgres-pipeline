@@ -5,6 +5,7 @@
         "order_id": {
             "rules": {
                 "required": true,
+                "data_type": "string",
                 "format": "^\\d{3}-\\d{4}-\\d{3}-\\d{14}$",
                 "permitted_value": {
                     "accepted_value": null,
@@ -15,6 +16,7 @@
         "item_id": {
             "rules": {
                 "required": true,
+                "data_type": "string",
                 "format": "^ITEM\\d{4}$"
             }
         },

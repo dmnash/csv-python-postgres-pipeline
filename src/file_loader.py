@@ -21,7 +21,7 @@ def load_csv(runtime_config, schema_keys):
         extraneous_cols = csv_keys - schema_keys
         if extraneous_cols:
             if runtime_config["drop_extra_cols"]:
-                raw_data = raw_data[schema_keys]
+                raw_data = raw_data[list(schema_keys)]
             log_event(runtime_config, f"Extraneous columns {'dropped' if runtime_config["drop_extra_cols"]==True else 'found'}: {sorted(list(extraneous_cols))}", "INGEST")
 
         rename_map = {col:f"input_{col}" for col in raw_data.columns if col in reserved_cols}
