@@ -3,50 +3,57 @@
     "group_reject": true,
     "schema_definitions": {
         "order_id": {
-        "required": true,
-        "custom_validator": "check_rejected_order",
-        "rules": {
-            "regex": "^\\d{3}-\\d{4}-\\d{3}-\\d{14}$",
-            "forbidden_values": ["UNKNOWN", "N/A"]
-        }
+            "rules": {
+                "required": true,
+                "format": "^\\d{3}-\\d{4}-\\d{3}-\\d{14}$",
+                "permitted_value": {
+                    "accepted_value": null,
+                    "forbidden_value": ["UNKNOWN", "N/A"]
+                }
+            }
         },
         "item_id": {
-        "required": true,
-        "rules": {
-            "regex": "^ITEM\\d{4}$"
-        }
+            "rules": {
+                "required": true,
+                "format": "^ITEM\\d{4}$"
+            }
         },
         "item_name": {
-        "required": true,
-        "rules": {}
+            "rules": {
+                "required": true
+            }
         },
         "quantity": {
-        "required": true,
-        "rules": {
-            "data_type": "int",
-            "min_value": 1
-        }
+            "rules": {
+                "required": true,
+                "data_type": "int",
+                "limit": {
+                    "min": 1,
+                    "max": null
+                }
+            }
         },
         "unit_price": {
-        "required": true,
-        "rules": {
-            "data_type": "float",
-            "min_value": 0.0
-        }
+            "rules": {
+                "required": true,
+                "data_type": "float",
+                "limit": {
+                    "min": 0.0,
+                    "max": null
+                }
+            }
         },
         "order_date": {
-        "required": true,
-        "rules": {
-            "data_type": "date"
-        }
+            "rules": {
+                "required": true,
+                "data_type": "date"
+            }
         },
         "shipping_method": {
-        "required": false,
-        "rules": {}
+            "rules": {}
         },
         "discount_code": {
-        "required": false,
-        "rules": {}
+            "rules": {}
         }
     }
-}    
+}  

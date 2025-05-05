@@ -13,6 +13,7 @@ def main(csv_path="sample_data/example1.csv"):
         config = json.load(f)
 
     runtime_config = config["runtime_config"]
+    runtime_config["csv_path"] = csv_path
     db_config = config["db_config"]
     schema_path = config["schema_path"]
 
@@ -22,7 +23,7 @@ def main(csv_path="sample_data/example1.csv"):
     schema_keys = set(schema["schema_definitions"].keys())
 
     # Load raw data from a CSV file
-    raw_data = load_csv(runtime_config, schema_keys, csv_path)
+    raw_data = load_csv(runtime_config, schema_keys)
     if raw_data is None:
         log_event("Aborting pipeline: no data loaded.","ERROR")
         return

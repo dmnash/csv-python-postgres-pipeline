@@ -1,9 +1,8 @@
 {
     "runtime_config": {
-        "config_item1": "value",
-        "config_item2": "value",
-        "config_item3": "value",
-        "config_item4": "value",
+        "cascade_reject": true,
+        "drop_extra_cols": true,
+        "csv_path": "",
         "log_config": {
             "log_setting1": "value",
             "log_setting2": "value",
