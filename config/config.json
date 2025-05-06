@@ -1,6 +1,6 @@
 {
     "runtime_config": {
-        "cascade_reject": true,
+        "cascade_reject": false,
         "drop_extra_cols": true,
         "csv_path": "",
         "log_config": {

@@ -2,6 +2,7 @@
 
 import sys
 import json
+import src.validation_library as vl
 from src.file_loader import load_csv
 from src.validator import validate_data
 from src.db_writer import write_to_db
@@ -20,6 +21,13 @@ def main(csv_path="sample_data/stresstest1.csv"):
     # load schema
     with open(schema_path, "r") as f:
         schema = json.load(f)
+    schema_valid, validation_msg = vl.schema_validator(schema)
+    if not schema_valid:
+        log_event(runtime_config, f"Schema validation failed:\n{validation_msg}", "ERROR")
+        sys.exit(1)
+    else:
+        log_event(runtime_config, validation_msg, "EVENT")
+    
     schema_keys = set(schema["schema_definitions"].keys())
 
     # Load raw data from a CSV file

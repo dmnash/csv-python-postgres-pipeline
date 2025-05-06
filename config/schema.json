@@ -1,6 +1,6 @@
 {
     "primary_key": "order_id",
-    "group_reject": true,
+    "group_reject": false,
     "schema_definitions": {
         "order_id": {
             "rules": {
@@ -28,7 +28,7 @@
         "quantity": {
             "rules": {
                 "required": true,
-                "data_type": "int",
+                "data_type": "integer",
                 "limit": {
                     "min": 1,
                     "max": null
@@ -48,7 +48,8 @@
         "order_date": {
             "rules": {
                 "required": true,
-                "data_type": "date"
+                "data_type": "string",
+                "format": "^\\d{4}-\\d{2}-\\d{2}$"
             }
         },
         "shipping_method": {
