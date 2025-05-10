@@ -1,6 +1,6 @@
 {
     "runtime_config": {
-        "cascade_reject": false,
+        "cascade_reject": true,
         "drop_extra_cols": true,
         "csv_path": "",
         "log_config": {
@@ -11,12 +11,12 @@
         }
     },
     "db_config": {
-      "host": "localhost",
-      "port": 5432,
-      "name": "my_database",
-      "user": "my_username",
-      "password": "my_password",
-      "table": "orders"
+        "host": "localhost",
+        "port": 5432,
+        "name": "dev_ingestion",
+        "user": "ingestion_user",
+        "password": "sandbox_password",
+        "table": "orders"
     },
     "schema_path": "config/schema.json"
 }

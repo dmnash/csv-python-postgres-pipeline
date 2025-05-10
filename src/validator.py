@@ -24,39 +24,46 @@ def validate_data(runtime_config, schema, raw_data):
     for primary_key_value, group in grouped_data:
         group_rejected = False
         group_reject_reason = ""
+
         for idx, row in group.iterrows():
             row_rejected = False
             rejection_reason = ""
+
             for col_name, col_rules in schema_definitions.items():
                 test_value = row[col_name]
                 rules = col_rules.get("rules",{})
+
                 for rule_name, schema_rule in rules.items():
                     validate_func = vl.dispatch_table.get(rule_name)
                     if not validate_func:
                         log_event(runtime_config, f"'{rule_name}' validation function not found for column '{col_name}'", "ERROR")
                         continue
                     check_result, check_msg = validate_func(schema_rule, test_value)
-                    if check_result == "YELLOW":
-                        rejection_reason = f"row {row['source_index']} information at {col_name}: {check_msg}\n"
-                    if check_result == "RED":
-                        rejection_reason = f"row {row['source_index']} rejected at {col_name}: {check_msg}\n"
-                        row_rejected = True
+                    
+                    if check_result in ("RED", "YELLOW"):
+                        rejection_reason = f"row {row['source_index']} {'rejected at' if check_result == 'RED' else 'information at'} {col_name}: {check_msg}"
+                        log_event(runtime_config, rejection_reason, "INGEST")
                         if group_reject:
                             group_reject_reason += rejection_reason
-                            group_rejected = True
-                        if not cascade_reject:
-                            log_event(runtime_config, rejection_reason, "INGEST")
-                        elif cascade_reject:
-                            log_event(runtime_config, rejection_reason, "INGEST")
-                            break
+                        if check_result == "RED":
+                            row_rejected = True
+                            if group_reject:
+                                group_rejected = True
+                            if cascade_reject:
+                                break
+                            
                 if cascade_reject and row_rejected:
                     break
-            if cascade_reject and row_rejected:
+
+            if cascade_reject and group_reject and row_rejected:
                 break
-        if not group_rejected and check_result == "GREEN":
-            valid_data.append(group)
-        else:
-            rejected_data.update({primary_key_value: group_reject_reason})
+
+            if not row_rejected and not group_reject:
+                valid_data.append(row.to_frame().T)
+
+        if group_reject:
+            if not group_rejected:
+                valid_data.append(group)
     
     log_event(runtime_config, "Validation module called (no rules applied)","EVENT")
     return pd.concat(valid_data) if valid_data else pd.DataFrame()

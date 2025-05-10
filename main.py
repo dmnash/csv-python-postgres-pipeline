@@ -40,6 +40,7 @@ def main(csv_path="sample_data/stresstest1.csv"):
     cleaned_data = validate_data(runtime_config, schema, raw_data)
 
     # Write validated data to the database
+    log_event(runtime_config, f"Sending {len(cleaned_data)} rows to database", "INGEST")
     write_to_db(runtime_config, db_config, cleaned_data)
 
     # Log completion
