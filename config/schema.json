@@ -1,62 +1,67 @@
 {
-    "primary_key": "order_id",
-    "group_reject": false,
-    "schema_definitions": {
-        "order_id": {
-            "rules": {
-                "required": true,
-                "data_type": "string",
-                "format": "^\\d{3}-\\d{4}-\\d{3}-\\d{14}$",
-                "permitted_value": {
-                    "accepted_value": null,
-                    "forbidden_value": ["UNKNOWN", "N/A"]
-                }
-            }
-        },
-        "item_id": {
-            "rules": {
-                "required": true,
-                "data_type": "string",
-                "format": "^ITEM\\d{4}$"
-            }
-        },
-        "item_name": {
-            "rules": {
-                "required": true
-            }
-        },
-        "quantity": {
-            "rules": {
-                "required": true,
-                "data_type": "integer",
-                "limit": {
-                    "min": 1,
-                    "max": null
-                }
-            }
-        },
-        "unit_price": {
-            "rules": {
-                "required": true,
-                "data_type": "float",
-                "limit": {
-                    "min": 0.0,
-                    "max": null
-                }
-            }
-        },
-        "order_date": {
-            "rules": {
-                "required": true,
-                "data_type": "string",
-                "format": "^\\d{4}-\\d{2}-\\d{2}$"
-            }
-        },
-        "shipping_method": {
-            "rules": {}
-        },
-        "discount_code": {
-            "rules": {}
+  "primary_key": "order_id",
+  "group_reject": false,
+  "schema_definitions": {
+    "order_id": {
+      "rules": {
+        "required": true,
+        "data_type": "TEXT",
+        "format": "^\\d{3}-\\d{4}-\\d{3}-\\d{14}$",
+        "permitted_value": {
+          "accepted_value": null,
+          "forbidden_value": ["UNKNOWN", "N/A"]
         }
+      }
+    },
+    "item_id": {
+      "rules": {
+        "required": true,
+        "data_type": "TEXT",
+        "format": "^ITEM\\d{4}$"
+      }
+    },
+    "item_name": {
+      "rules": {
+        "required": true,
+        "data_type": "TEXT"
+      }
+    },
+    "quantity": {
+      "rules": {
+        "required": true,
+        "data_type": "INTEGER",
+        "limit": {
+          "min": 1,
+          "max": null
+        }
+      }
+    },
+    "unit_price": {
+      "rules": {
+        "required": true,
+        "data_type": "REAL",
+        "limit": {
+          "min": 0.0,
+          "max": null
+        }
+      }
+    },
+    "order_date": {
+      "rules": {
+        "required": true,
+        "data_type": "TEXT",
+        "format": "^\\d{4}-\\d{2}-\\d{2}$"
+      }
+    },
+    "shipping_method": {
+      "rules": {
+        "data_type": "TEXT"
+      }
+    },
+    "discount_code": {
+      "rules": {
+        "data_type": "TEXT"
+      }
     }
-}  
+  }
+}

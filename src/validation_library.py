@@ -8,6 +8,24 @@ import re
 # "YELLOW" results pass validation but will generate a log entry
 # "RED" results fail validation and will generate a log entry
 
+POSTGRES_PYTHON_DATA_MAP = {
+    "TEXT": str,
+    "VARCHAR": str,
+    "CHAR": str,
+    "INTEGER": int,
+    "INT": int,
+    "SMALLINT": int,
+    "BIGINT": int,
+    "REAL": float,
+    "FLOAT": float,
+    "DOUBLE PRECISION": float,
+    "NUMERIC": float,
+    "BOOLEAN": bool,
+    "DATE": str,      # note: you'd likely parse this if you want to enforce date logic
+    "TIMESTAMP": str, # same here
+    "TIME": str
+}
+
 def function_wrangler(rule_func):
     def wrapper(schema_rule, test_value):
         try:
@@ -46,14 +64,13 @@ def permitted_value(schema_rule, test_value):
 @function_wrangler
 def valid_datatype(schema_rule, test_value):
 # this will be the data type validation test
-    expected_type = schema_rule.lower()
-    type_map = {"integer": int, "float": float, "string": str}
-    if expected_type not in type_map:
+    expected_type = schema_rule.upper()
+    if expected_type not in POSTGRES_PYTHON_DATA_MAP:
         return "RED", f"Unsupported data type: {expected_type}"
-    if isinstance(test_value, type_map[expected_type]):
+    if isinstance(test_value, POSTGRES_PYTHON_DATA_MAP[expected_type]):
         return "GREEN", f"{test_value} is valid {expected_type}"
     try:
-        cast_value = type_map[expected_type](test_value)
+        cast_value = POSTGRES_PYTHON_DATA_MAP[expected_type](test_value)
         return "YELLOW", f"{test_value} cast from {type(test_value).__name__.lower()} to {expected_type}"
     except Exception as e:
         return "RED", f"{test_value} is not castable to {expected_type} ({type(test_value).__name__.lower()})"
