@@ -33,7 +33,7 @@ def log_event(runtime_config, message, log_type):
             log.write(f"[{timestamp}] {message}; logged as {log_type.upper()}\n")
 
     # Print to console for dev
-    print(entry.strip())
+    # print(entry.strip())
 
 if __name__ == "__main__":
     import sys

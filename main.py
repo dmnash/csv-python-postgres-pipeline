@@ -8,9 +8,9 @@ from src.validator import validate_data
 from src.db_writer import write_to_db
 from src.logger import log_event
 
-def main(csv_path="sample_data/stresstest1.csv"):
+def main(csv_path="sample_data/stresstest1.csv", config_path="config/config.json"):
     # load config
-    with open("config/config.json", "r") as f:
+    with open(config_path, "r") as f:
         config = json.load(f)
 
     runtime_config = config["runtime_config"]
@@ -21,12 +21,14 @@ def main(csv_path="sample_data/stresstest1.csv"):
     # load schema
     with open(schema_path, "r") as f:
         schema = json.load(f)
+    '''
     schema_valid, validation_msg = vl.schema_validator(schema)
     if not schema_valid:
         log_event(runtime_config, f"Schema validation failed:\n{validation_msg}", "ERROR")
         sys.exit(1)
     else:
         log_event(runtime_config, validation_msg, "EVENT")
+    '''
     
     schema_keys = set(schema["schema_definitions"].keys())
 

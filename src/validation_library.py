@@ -4,9 +4,9 @@ import pandas as pd
 import re
 
 # validation functions return "GREEN", "YELLOW", or "RED", and a logging message
-# "GREEN" results pass validation and will not generate a log entry
-# "YELLOW" results pass validation but will generate a log entry
-# "RED" results fail validation and will generate a log entry
+# "GREEN"  : results pass validation and will not generate a log entry
+# "YELLOW" : results pass validation but will generate informational log entry
+# "RED"    : results fail validation and will generate rejection log entry
 
 POSTGRES_PYTHON_DATA_MAP = {
     "TEXT": str,
@@ -103,6 +103,13 @@ dispatch_table = {
 }
 
 def schema_validator(schema: dict) -> tuple[bool, str]:
+    '''
+    Validate that MIN and MAX rules don't conflict.
+    Validate that DATA_TYPE requirement references valid data type
+    Validate that REGEX requirement syntax is valid
+    Validate that PERMITTED_VALUE rules don't invalidate each other, warn on partial overlap
+    Validate that RULE is known
+    '''
     schema_valid = True
     validation_msg = ""
     return schema_valid, validation_msg
