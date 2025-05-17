@@ -9,6 +9,7 @@ def validate_data(runtime_config, schema, raw_data):
     primary_key = schema["primary_key"]
     group_reject = schema["group_reject"]
     schema_definitions = schema["schema_definitions"]
+    dispatch_table = vl.build_dispatch_table(runtime_config)
     valid_data = []
     rejected_data = {}
     rule_name = ""
@@ -27,35 +28,28 @@ def validate_data(runtime_config, schema, raw_data):
 
         for idx, row in group.iterrows():
             row_rejected = False
-            rejection_reason = ""
-
+            
             for col_name, col_rules in schema_definitions.items():
                 test_value = row[col_name]
                 rules = col_rules.get("rules",{})
 
                 for rule_name, schema_rule in rules.items():
-                    validate_func = vl.dispatch_table.get(rule_name)
+                    validate_func = dispatch_table.get(rule_name)
                     if not validate_func:
                         log_event(runtime_config, f"'{rule_name}' validation function not found for column '{col_name}'", "ERROR")
                         continue
-                    check_result, check_msg = validate_func(schema_rule, test_value)
-                    
-                    if check_result in ("RED", "YELLOW"):
-                        rejection_reason = f"row {row['source_index']} {'rejected at' if check_result == 'RED' else 'information at'} {col_name}: {check_msg}"
-                        log_event(runtime_config, rejection_reason, "INGEST")
+                    result = validate_func(schema_rule, test_value, col_name, row["source_index"])
+                    if not result["valid"]:
+                        row_rejected = True
                         if group_reject:
-                            group_reject_reason += rejection_reason
-                        if check_result == "RED":
-                            row_rejected = True
-                            if group_reject:
-                                group_rejected = True
-                            if cascade_reject:
-                                break
+                            group_reject_reason += f" {result['message']}"
+                        if cascade_reject:
+                            break
                             
                 if cascade_reject and row_rejected:
                     break
 
-            if cascade_reject and group_reject and row_rejected:
+            if group_reject and cascade_reject and row_rejected:
                 break
 
             if not row_rejected and not group_reject:
