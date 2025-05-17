@@ -1,6 +1,6 @@
 # CSV to PostgreSQL Ingestion Engine
 
-# Ingestion Engine
+## Ingestion Engine
 
 The Ingestion Engine is a modular, schema-driven pipeline for validating and ingesting structured CSV data into a PostgreSQL database. It performs field-level validation based on a JSON schema, logs processing outcomes, and writes clean data into a configured table.
 
@@ -11,9 +11,10 @@ This tool is designed for technical users who want control, visibility, and audi
 ## Features
 
 * Schema-based column validation
-* Trinary rule handling (rejected / warn / accepted)
-* Structured logging with support for grouped or row-level rejection
-* Centralized config for runtime behavior
+* Each rule can either pass or fail, with optional logging of successes, warnings, or failures
+* Structured logging for all validation events
+* Group-level or row-level rejection logic (schema-driven)
+* Config-driven runtime behavior
 * CLI interface via `run_ingestor.py`
 * PostgreSQL target (no other DBs supported)
 
@@ -21,10 +22,11 @@ This tool is designed for technical users who want control, visibility, and audi
 
 ## Known Limitations
 
-* The schema validator is not yet functional (schema files are assumed to be well-formed)
-* Logging is verbose and unstructured; overhaul is in progress
+* Schema validation tooling (`validate_schema`) is stubbed but not implemented
+* Config and DB connection validation are also stubbed
+* Logging is currently always enabled and verbose
 * Only supports PostgreSQL as a destination
-* No GUI yet (planned)
+* GUI is not yet implemented (planned)
 * No schema auto-generation or assistive tooling
 
 ---
@@ -34,12 +36,12 @@ This tool is designed for technical users who want control, visibility, and audi
 1. Clone the repository
 2. Create a virtual environment:
 
-   ```
+   ```bash
    python -m venv venv
    ```
 3. Activate the environment:
 
-   ```
+   ```bash
    # Windows
    venv\Scripts\activate
    # macOS/Linux
@@ -47,7 +49,7 @@ This tool is designed for technical users who want control, visibility, and audi
    ```
 4. Install requirements:
 
-   ```
+   ```bash
    pip install -r requirements.txt
    ```
 
@@ -57,7 +59,7 @@ This tool is designed for technical users who want control, visibility, and audi
 
 Run the ingestion engine from the command line:
 
-```
+```bash
 python run_ingestor.py --csv sample_data/stresstest1.csv --config config/config.json
 ```
 
@@ -70,17 +72,18 @@ If no arguments are provided, defaults will be used:
 
 ## File Layout
 
-```
-run_ingestor.py       # CLI wrapper  
-main.py               # Ingestion pipeline entry point  
-config/  
-  config.json         # Runtime behavior configuration  
-  schema.json         # Schema-based column rules  
-logger.py             # Logging utility  
-validator.py          # Data validation logic  
-db_writer.py          # Postgres insert logic  
-internal_docs/  
-  stitchlog.txt       # Development log  
+```bash
+run_ingestor.py            # CLI entry point
+main.py                    # Pipeline orchestration
+src/
+  file_loader.py           # CSV file loading and schema alignment
+  validator.py             # Validation loop and execution engine
+  validation_library.py    # Rule functions and database type mapping
+  db_writer.py             # PostgreSQL insert logic
+  logger.py                # Logging utility
+config/
+  config.json              # Runtime configuration
+  schema.json              # Validation schema
 ```
 
 ---
@@ -89,10 +92,13 @@ internal_docs/
 
 The ingestion behavior is controlled by `config/config.json`. Key fields include:
 
-* `input_path`: default CSV file
-* `db_config`: database connection and table name
-* `cascade_reject`: halt row/group on first failure
-* `group_reject`: treat grouped rows atomically
+* `csv_path`: populated at runtime
+* `schema_path`: location of the JSON schema file
+* `db_config`: connection and destination table
+* `runtime_config`:
+
+  * `cascade_reject`: stop evaluating a row/group on first failure
+  * `group_reject`: treat grouped rows as a single atomic unit
 
 ---
 
@@ -100,18 +106,22 @@ The ingestion behavior is controlled by `config/config.json`. Key fields include
 
 The schema file (`schema.json`) defines:
 
-* Which columns are required
-* What data type they must conform to
-* Optional regex and range validation rules
-* Whether permitted/forbidden value lists are enforced
+* Column presence and required status
+* Data types and PostgreSQL compatibility
+* Optional regex and range rules
+* Permitted and forbidden value lists
 
 ---
 
 ## Logging
 
-Logs are written to the path defined in `config.json`.
-Current logging includes all rejections, warnings, and status updates.
-Logging output is verbose by default and subject to future refinement.
+Logs are generated automatically during each run. They record:
+
+* All rule violations and warnings
+* Row- and group-level outcomes
+* Summary-level ingestion metrics (planned)
+
+Logging output is always active. Verbosity controls and file routing are planned.
 
 ---
 

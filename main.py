@@ -18,17 +18,15 @@ def main(csv_path="sample_data/stresstest1.csv", config_path="config/config.json
     db_config = config["db_config"]
     schema_path = config["schema_path"]
 
+    # TODO: vl.validate_config() will called here
+    
+    # TODO: vl.validate_database() will called here
+
     # load schema
     with open(schema_path, "r") as f:
         schema = json.load(f)
-    '''
-    schema_valid, validation_msg = vl.schema_validator(schema)
-    if not schema_valid:
-        log_event(runtime_config, f"Schema validation failed:\n{validation_msg}", "ERROR")
-        sys.exit(1)
-    else:
-        log_event(runtime_config, validation_msg, "EVENT")
-    '''
+
+    # TODO: vl.validate_schema() will be called here
     
     schema_keys = set(schema["schema_definitions"].keys())
 

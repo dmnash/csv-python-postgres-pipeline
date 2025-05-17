@@ -9,10 +9,10 @@ def validate_data(runtime_config, schema, raw_data):
     primary_key = schema["primary_key"]
     group_reject = schema["group_reject"]
     schema_definitions = schema["schema_definitions"]
-    dispatch_table = vl.build_dispatch_table(runtime_config)
+    dispatch_table = vl.build_dispatch_table()
+
     valid_data = []
     rejected_data = {}
-    rule_name = ""
 
     null_key_rows = raw_data[raw_data[primary_key].isnull()]
     if not null_key_rows.empty:
@@ -24,7 +24,7 @@ def validate_data(runtime_config, schema, raw_data):
 
     for primary_key_value, group in grouped_data:
         group_rejected = False
-        group_reject_reason = ""
+        group_reject_reason = f"group {primary_key_value} rejected:\n"
 
         for idx, row in group.iterrows():
             row_rejected = False
@@ -34,15 +34,11 @@ def validate_data(runtime_config, schema, raw_data):
                 rules = col_rules.get("rules",{})
 
                 for rule_name, schema_rule in rules.items():
-                    validate_func = dispatch_table.get(rule_name)
-                    if not validate_func:
-                        log_event(runtime_config, f"'{rule_name}' validation function not found for column '{col_name}'", "ERROR")
-                        continue
-                    result = validate_func(schema_rule, test_value, col_name, row["source_index"])
+                    result = validation_engine(runtime_config, dispatch_table, rule_name, schema_rule, test_value, col_name, row["source_index"])
                     if not result["valid"]:
                         row_rejected = True
                         if group_reject:
-                            group_reject_reason += f" {result['message']}"
+                            group_reject_reason += f"{result['message']}\n"
                         if cascade_reject:
                             break
                             
@@ -61,3 +57,20 @@ def validate_data(runtime_config, schema, raw_data):
     
     log_event(runtime_config, "Validation module called (no rules applied)","EVENT")
     return pd.concat(valid_data) if valid_data else pd.DataFrame()
+
+def validation_engine(runtime_config, dispatch_table, rule_name, schema_rule, test_value, col_name=None, source_index=None):
+    validation_func = dispatch_table.get(rule_name)
+    if not validation_func:
+        log_event(runtime_config, f"'{rule_name}' validation function not found for column '{col_name}'", "ERROR")
+        return {"valid": False, "log": True, "message": f"Unknown rule '{rule_name}'", "log_level": "ERROR", "col_name": col_name, "source_index": source_index}
+    try:
+        result = validation_func(schema_rule, test_value)
+        result.setdefault("col_name", col_name)
+        result.setdefault("source_index", source_index)
+        result["message"] = f"row {result['source_index']} rejected at {result['col_name']}: {result['message']}"
+        if result.get("log"):
+            log_event(runtime_config, result.get("message"), result.get("log_level", "INGEST"))
+        return result
+    except Exception as e:
+        log_event(runtime_config, f"{validation_func.__name__} failed: {e}", "EXCEPTION")
+        return {"valid": False, "log": True, "message": f"{validation_func.__name__} failed: {e}", "log_level": "EXCEPTION", "col_name": col_name, "source_index": source_index}
