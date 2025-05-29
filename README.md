@@ -1,127 +1,150 @@
 # CSV to PostgreSQL Ingestion Engine
 
-## Ingestion Engine
+## Overview
 
-The Ingestion Engine is a modular, schema-driven pipeline for validating and ingesting structured CSV data into a PostgreSQL database. It performs field-level validation based on a JSON schema, logs processing outcomes, and writes clean data into a configured table.
+The **Ingestion Engine** is a modular, schema-driven Python pipeline for validating and ingesting structured CSV data into a PostgreSQL database. It validates incoming rows against a JSON schema, applies configurable rejection logic, and logs all outcomes to structured CSV logs for analysis.
 
-This tool is designed for technical users who want control, visibility, and auditability in their data ingestion process—without manually writing one-off scripts.
+This tool prioritizes **control**, **auditability**, and **data integrity**, with a design aimed at technical users who need visibility into the ingestion process.
 
 ---
 
 ## Features
 
-* Schema-based column validation
-* Each rule can either pass or fail, with optional logging of successes, warnings, or failures
-* Structured logging for all validation events
-* Group-level or row-level rejection logic (schema-driven)
-* Config-driven runtime behavior
-* CLI interface via `run_ingestor.py`
-* PostgreSQL target (no other DBs supported)
+* **Schema-based column validation** with rules for:
+
+  * Presence (required)
+  * Data type enforcement and casting
+  * Regex format compliance
+  * Value whitelisting/blacklisting
+  * Min/max limits
+* **Group-level (order-level) rejection** and **cascade failure control**
+* **Detailed, structured logs**:
+
+  * Discrete log files for different log types (`INGEST`, `ERROR`, `EXCEPTION`, etc.)
+  * Optional merged log file (`MERGED`)
+* **Configurable verbosity** through `log_profile` in `config.json`
+* **Automatic crash logs** capturing the full session buffer on failure
+* **PostgreSQL integration** for writing validated data
+* **CLI interface** via `run_ingestor.py`
 
 ---
 
-## Known Limitations
+## Current Limitations
 
-* Schema validation tooling (`validate_schema`) is stubbed but not implemented
-* Config and DB connection validation are also stubbed
-* Logging is currently always enabled and verbose
-* Only supports PostgreSQL as a destination
-* GUI is not yet implemented (planned)
-* No schema auto-generation or assistive tooling
-
----
-
-## Installation
-
-1. Clone the repository
-2. Create a virtual environment:
-
-   ```bash
-   python -m venv venv
-   ```
-3. Activate the environment:
-
-   ```bash
-   # Windows
-   venv\Scripts\activate
-   # macOS/Linux
-   source venv/bin/activate
-   ```
-4. Install requirements:
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
----
-
-## Usage
-
-Run the ingestion engine from the command line:
-
-```bash
-python run_ingestor.py --csv sample_data/stresstest1.csv --config config/config.json
-```
-
-If no arguments are provided, defaults will be used:
-
-* CSV path: `sample_data/stresstest1.csv`
-* Config path: `config/config.json`
+* **Schema, config, and database validation** functions are stubbed (not yet implemented)
+* **No GUI** (planned)
+* **No schema auto-generation** (planned)
+* **No multi-database support**—PostgreSQL only
+* **No chunked processing (`elephant_mode`) yet**—planned for large datasets
 
 ---
 
 ## File Layout
 
-```bash
-run_ingestor.py            # CLI entry point
-main.py                    # Pipeline orchestration
+```
+run_ingestor.py            # CLI wrapper
 src/
+  main.py                  # Pipeline orchestration
   file_loader.py           # CSV file loading and schema alignment
   validator.py             # Validation loop and execution engine
-  validation_library.py    # Rule functions and database type mapping
+  validation_library.py    # Validation rule functions and type mapping
   db_writer.py             # PostgreSQL insert logic
-  logger.py                # Logging utility
+  logger.py                # Logging and crash handling
 config/
-  config.json              # Runtime configuration
+  config.json              # Runtime and log configuration
   schema.json              # Validation schema
+logs/                      # Generated log files
 ```
 
 ---
 
-## Config Overview
+## Configuration
 
-The ingestion behavior is controlled by `config/config.json`. Key fields include:
+### `config.json` (simplified view)
 
-* `csv_path`: populated at runtime
-* `schema_path`: location of the JSON schema file
-* `db_config`: connection and destination table
-* `runtime_config`:
+```json
+{
+  "runtime_config": {
+    "user_id": "user_id",
+    "cascade_reject": true,
+    "drop_extra_cols": true,
+    "log_config": {
+      "log_to_console": true,
+      "merge_logs": true,
+      "log_filename": "logs/{session_id}_{log_type}_LOG.csv",
+      "log_profile": {
+        "validation_reject": true,
+        "validation_warn": true,
+        "validation_accept": false,
+        "error_critical": true,
+        "error_minor": true,
+        "info_general": true,
+        "info_detailed": false,
+        "function_call": false,
+        "procedure_status": true
+      }
+    }
+  },
+  "db_config": { ... },
+  "schema_path": "config/schema.json"
+}
+```
 
-  * `cascade_reject`: stop evaluating a row/group on first failure
-  * `group_reject`: treat grouped rows as a single atomic unit
+### `schema.json` (simplified view)
+
+```json
+{
+  "primary_key": "order_id",
+  "group_reject": false,
+  "schema_definitions": {
+    "order_id": { "rules": { "required": true, "data_type": "TEXT", ... } },
+    "quantity": { "rules": { "data_type": "INTEGER", "limit": { "min": 1 } } },
+    ...
+  }
+}
+```
 
 ---
 
-## Schema Overview
+## Logging System
 
-The schema file (`schema.json`) defines:
+* Logs are **structured CSV files** (one per `log_type`, plus optional merged log).
+* Each log entry includes:
 
-* Column presence and required status
-* Data types and PostgreSQL compatibility
-* Optional regex and range rules
-* Permitted and forbidden value lists
+  * `timestamp`
+  * `session_id`
+  * `user_id`
+  * `log_type` (e.g., `INGEST`, `ERROR`)
+  * `log_class` (e.g., `validation_reject`, `error_critical`)
+  * `message`
+  * `called_by` (function name)
+* **Crash logs** are written automatically on exception, dumping the full session buffer for post-mortem analysis.
+* **Console logging** is optional (`log_to_console` toggle).
 
 ---
 
-## Logging
+## Usage
 
-Logs are generated automatically during each run. They record:
+Run from the CLI:
 
-* All rule violations and warnings
-* Row- and group-level outcomes
-* Summary-level ingestion metrics (planned)
+```bash
+python run_ingestor.py --csv path/to/file.csv --config path/to/config.json
+```
 
-Logging output is always active. Verbosity controls and file routing are planned.
+Defaults:
+
+* `csv_path`: `sample_data/stresstest1.csv`
+* `config_path`: `config/config.json`
+
+---
+
+## Roadmap
+
+* Finalize `schema_validator`, `validate_config`, and `validate_database` functions
+* Refactor `log_profile` to a more user-friendly toggle structure (optional enhancement)
+* Implement `elephant_mode` (chunked processing for large files)
+* Add GUI and schema generation utilities
+* Polish naming conventions and perform a final consistency pass
 
 ---
 

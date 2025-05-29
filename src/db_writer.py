@@ -20,9 +20,23 @@ def write_to_db(runtime_config, db_config, cleaned_data):
         with conn:
             with conn.cursor() as cur:
                 execute_values(cur, insert_statement, insert_data)
-                log_event(runtime_config, f"data written to {dest_table}", "INGEST")
+                log_event(runtime_config, {
+                    "message": f"data written to {dest_table}",
+                    "log_type": "EVENT",
+                    "log_class": "procedure_status",
+                    "called_by": "db_writer.py"
+                    })
     except Exception as e:
-        log_event(runtime_config, f"failed to write to {dest_table}: {e}","ERROR")
+        log_event(runtime_config, {
+            "message": f"failed to write to {dest_table}: {e}",
+            "log_type": "ERROR",
+            "log_class": "error_critical",
+            "called_by": "db_writer.py"
+            })
     finally:
         if "conn" in locals():
             conn.close()
+
+'''
+{"message": "","log_type": "","log_class": "","called_by": ""}
+'''

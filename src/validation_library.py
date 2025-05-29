@@ -13,43 +13,78 @@ def build_dispatch_table():
     }
 
 # Validation functions to test schema requirements are defined in this section.
+# TODO: Refactor all validation functions to return {"valid": bool, "log": bool}
 
 def valid_required(schema_rule, test_value):
 # exists-and-not-null test
-    if not schema_rule:
-        return {"valid": True, "log": False, "message": "no test", "log_level": "INGEST"}
     if test_value is None or pd.isnull(test_value):
-        return {"valid": False, "log": True, "message": f"{test_value} is missing or null", "log_level": "INGEST"}
-    return {"valid": True, "log": False, "message": f"{test_value} exists and is not null", "log_level": "INGEST"}
+        return {
+            "valid": False, "log_class": "validation_reject", "called_by": "valid_required",
+            "message": f"is missing or null"
+            }
+    return {
+        "valid": True, "log_class": "validation_accept", "called_by": "valid_required",
+        "message": f"exists and is not null"
+        }
 
 def format_compliance(schema_rule, test_value):
 # regex format compliance test
     if not re.match(schema_rule, str(test_value)):
-        return {"valid": False, "log":True, "message": f"{test_value} does not comply with format {schema_rule}", "log_level": "INGEST"}
-    return {"valid": True, "log": False, "message": f"{test_value} complies with format {schema_rule}", "log_level": "INGEST"}
+        return {
+            "valid": False, "log_class": "validation_reject", "called_by": "format_compliance",
+            "message": f"does not comply with format {schema_rule}"
+            }
+    return {
+        "valid": True, "log_class": "validation_accept", "called_by": "format_compliance",
+        "message": f"complies with format {schema_rule}"
+        }
 
 def permitted_value(schema_rule, test_value):
 # accepted values and forbidden values tests
     if schema_rule.get("accepted_value") is not None and test_value in schema_rule["accepted_value"]:
-        return {"valid": True, "log": False, "message": f"{test_value} is a permitted value", "log_level": "INGEST"}
+        return {
+            "valid": True, "log_class": "validation_accept", "called_by": "permitted_value",
+            "message": f"{test_value} is an accepted value"
+            }
     if schema_rule.get("forbidden_value") is not None and test_value in schema_rule["forbidden_value"]:
-        return {"valid": False, "log": True, "message": f"{test_value} is a forbidden value", "log_level": "INGEST"}
+        return {
+            "valid": False, "log_class": "validation_reject", "called_by": "permitted_value",
+            "message": f"{test_value} is a forbidden value"
+            }
     if schema_rule.get("accepted_value") is not None:
-        return {"valid": False, "log": True, "message": f"{test_value} is not an accepted value", "log_level": "INGEST"}
-    return {"valid": True, "log": False, "message": f"{test_value} is a permitted value", "log_level": "INGEST"}
+        return {
+            "valid": False, "log_class": "validation_reject", "called_by": "permitted_value",
+            "message": f"{test_value} is not an accepted value"
+            }
+    return {
+        "valid": True, "log_class": "validation_accept",  "called_by": "permitted_value",
+        "message": f"{test_value} is an accepted value"
+        }
 
 def valid_datatype(schema_rule, test_value):
 # data type validation test
     expected_type = schema_rule.upper()
     if expected_type not in POSTGRES_PYTHON_DATA_MAP:
-        return {"valid": False, "log": True, "message": f"Unsupported data type: {expected_type}", "log_level": "INGEST"}
+        return {
+            "valid": False, "log_class": "validation_reject", "called_by": "valid_datatype",
+            "message": f"Unsupported data type: {expected_type}"
+            }
     if isinstance(test_value, POSTGRES_PYTHON_DATA_MAP[expected_type]):
-        return {"valid": True, "log": False, "message": f"{test_value} is valid {expected_type}", "log_level": "INGEST"}
+        return {
+            "valid": True, "log_class": "validation_accept",  "called_by": "valid_datatype",
+            "message": f"valid {expected_type}"
+            }
     try:
         cast_value = POSTGRES_PYTHON_DATA_MAP[expected_type](test_value)
-        return {"valid": True, "log": True, "message":  f"{test_value} cast from {type(test_value).__name__.lower()} to {expected_type}", "log_level": "INGEST"}
+        return {
+            "valid": True, "log_class": "validation_warn",  "called_by": "valid_datatype",
+            "message":  f"cast from {type(test_value).__name__.lower()} to {expected_type}"
+            }
     except Exception as e:
-        return {"valid": False, "log": True, "message": f"{test_value} is not castable to {expected_type} ({type(test_value).__name__.lower()})", "log_level": "INGEST"}
+        return {
+            "valid": False, "log_class": "validation_reject", "called_by": "valid_datatype",
+            "message": f"not castable to {expected_type} ({type(test_value).__name__.lower()})"
+            }
 
 def limit_value(schema_rule, test_value):
 # min/max value test
@@ -57,17 +92,32 @@ def limit_value(schema_rule, test_value):
         try:
             casted_value = type(schema_rule["min"])(test_value)
             if casted_value < schema_rule["min"]:
-                return {"valid": False, "log": True, "message": f"{test_value} below minimum tolerance {schema_rule['min']}", "log_level": "INGEST"}
+                return {
+                    "valid": False, "log_class": "validation_reject", "called_by": "limit_value",
+                    "message": f"below MIN tolerance {schema_rule['min']}"
+                    }
         except Exception as e:
-            return {"valid": False, "log": True, "message": f"{test_value} cannot be evaluated against MIN rule", "log_level": "INGEST"}
+            return {
+                "valid": False, "log_type": "ERROR", "log_class": "validation_reject", "called_by": "limit_value",
+                "message": f"cannot evaluate MIN rule ({str(e)})"
+                }
     if schema_rule.get("max") is not None:
         try:
             casted_value = type(schema_rule["max"])(test_value)
             if casted_value > schema_rule["max"]:
-                return {"valid": False, "log": True, "message": f"{test_value} exceeds maximum tolerance {schema_rule['max']}", "log_level": "INGEST"}
+                return {
+                    "valid": False, "log_class": "validation_reject", "called_by": "limit_value",
+                    "message": f"exceeds MAX tolerance {schema_rule['max']}"
+                    }
         except Exception as e:
-            return {"valid": False, "log": True, "message": f"{test_value} cannot be evaluated against MAX rule", "log_level": "INGEST"}
-    return {"valid": True, "log": False, "message": f"{test_value} is within accepted tolerance", "log_level": "INGEST"}
+            return {
+                "valid": False, "log_type": "ERROR", "log_class": "validation_reject", "called_by": "limit_value",
+                "message": f"cannot evaluate MAX rule ({str(e)})"
+                }
+    return {
+        "valid": True, "log_class": "validation_accept", "called_by": "limit_value",
+        "message": f"within MIN/MAX"
+        }
 
 # Functions to validate configuration, schema, and database are defined here.
 

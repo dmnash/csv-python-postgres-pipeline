@@ -16,10 +16,10 @@ def validate_data(runtime_config, schema, raw_data):
 
     null_key_rows = raw_data[raw_data[primary_key].isnull()]
     if not null_key_rows.empty:
-        log_event(runtime_config, "Null key rows dropped:", "INGEST")
+        log_event(runtime_config, {"message": "Null key rows dropped:","log_type": "INGEST","log_class": "info_detailed","called_by": "validate_data"})
         for idx, row in null_key_rows.iterrows():
-            log_event(runtime_config, row["source_index"], "INGEST")
-        log_event(runtime_config, "==end null key rows==", "INGEST")
+            log_event(runtime_config, {"message": row["source_index"],"log_type": "INGEST","log_class": "info_detailed","called_by": "validate_data"})
+        log_event(runtime_config, {"message": "==end null key rows==","log_type": "INGEST","log_class": "info_detailed","called_by": "validate_data"})
     grouped_data = raw_data.groupby(primary_key)
 
     for primary_key_value, group in grouped_data:
@@ -55,22 +55,27 @@ def validate_data(runtime_config, schema, raw_data):
             if not group_rejected:
                 valid_data.append(group)
     
-    log_event(runtime_config, "Validation module called (no rules applied)","EVENT")
+    log_event(runtime_config, {"message": "Validation module called","log_type": "EVENT","log_class": "info_general","called_by": "validate_data"})
     return pd.concat(valid_data) if valid_data else pd.DataFrame()
 
 def validation_engine(runtime_config, dispatch_table, rule_name, schema_rule, test_value, col_name=None, source_index=None):
     validation_func = dispatch_table.get(rule_name)
     if not validation_func:
-        log_event(runtime_config, f"'{rule_name}' validation function not found for column '{col_name}'", "ERROR")
-        return {"valid": False, "log": True, "message": f"Unknown rule '{rule_name}'", "log_level": "ERROR", "col_name": col_name, "source_index": source_index}
+        log_event(runtime_config, {"message": f"'{rule_name}' validation function not found for column '{col_name}'", "log_type": "ERROR", "log_class": "error_critical", "called_by": "validate_data"})
+        return {"valid": False, "log": True, "message": f"Unknown rule '{rule_name}'", "log_type": "ERROR", "col_name": col_name, "source_index": source_index}
     try:
         result = validation_func(schema_rule, test_value)
+        result.setdefault("log_type", "INGEST")
         result.setdefault("col_name", col_name)
         result.setdefault("source_index", source_index)
         result["message"] = f"row {result['source_index']} rejected at {result['col_name']}: {result['message']}"
-        if result.get("log"):
-            log_event(runtime_config, result.get("message"), result.get("log_level", "INGEST"))
+        log_event(runtime_config, result)
         return result
     except Exception as e:
-        log_event(runtime_config, f"{validation_func.__name__} failed: {e}", "EXCEPTION")
-        return {"valid": False, "log": True, "message": f"{validation_func.__name__} failed: {e}", "log_level": "EXCEPTION", "col_name": col_name, "source_index": source_index}
+        result = {
+            "valid": False, "log_type": "EXCEPTION", "log_class": "error_critical", 
+            "message": f"{validation_func.__name__} failed: {e}", 
+            "col_name": col_name, "source_index": source_index
+            }
+        log_event(runtime_config, result)
+        return result

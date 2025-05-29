@@ -1,13 +1,25 @@
 {
     "runtime_config": {
+        "user_id": "user_id",
+        "session_id": "",
         "cascade_reject": true,
         "drop_extra_cols": true,
         "csv_path": "",
         "log_config": {
-            "log_setting1": "value",
-            "log_setting2": "value",
-            "log_setting3": "value",
-            "log_setting4": "value"
+            "log_to_console": true,
+            "merge_logs": true,
+            "log_filename": "logs/{session_id}_{log_type}_LOG.csv",
+            "log_profile": {
+                "validation_reject": true,
+                "validation_warn": true,
+                "validation_accept": false,
+                "error_critical": true,
+                "error_minor": true,
+                "info_general": true,
+                "info_detailed": false,
+                "function_call": false,
+                "procedure_status": true
+            }
         }
     },
     "db_config": {
