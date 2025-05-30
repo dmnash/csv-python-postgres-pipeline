@@ -1,7 +1,7 @@
 # run_ingestor.py
 
 import argparse
-from main import main
+from src.main import main, initialize_config
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Run the CSV Ingestion Engine.")
@@ -10,5 +10,9 @@ def parse_args():
     return parser.parse_args()
 
 if __name__ == "__main__":
-    args = parse_args()
-    main(csv_path=args.csv, config_path=args.config)
+    try:
+        args = parse_args()
+        configs = initialize_config(config_path=args.config)
+        main(csv_path=args.csv, runtime_context=configs)
+    except Exception as e:
+        print(f"Critical error: {e}")

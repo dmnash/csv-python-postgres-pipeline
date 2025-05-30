@@ -1,7 +1,9 @@
 # validation_library.py
 
 import pandas as pd
+import psycopg2
 import re
+from psycopg2.extras import execute_values
 
 def build_dispatch_table():
     return {
@@ -121,33 +123,51 @@ def limit_value(schema_rule, test_value):
 
 # Functions to validate configuration, schema, and database are defined here.
 
-def validate_schema():
-    '''
-    Validate that MIN and MAX rules don't conflict.
-    Validate that DATA_TYPE requirement references valid data type
-    Validate that REGEX requirement syntax is valid
-    Validate that PERMITTED_VALUE rules don't invalidate each other, warn on partial overlap
-    Validate that RULE is known
-    '''
-    schema_valid = True
-    validation_msg = ""
-    return schema_valid, validation_msg
+def validate_schema(schema):
+    dispatch_table = build_dispatch_table()
+    validation_report = ""
+    for fieldname, fielddef in schema["schema_definitions"].items():
+        data_type = fielddef.get("data_type")
+        if data_type is not None and data_type not in POSTGRES_PYTHON_DATA_MAP:
+            validation_report += f"{fieldname}: unrecognized data type '{data_type}'\n"
+        for rule_name, rule_params in fielddef.get("rules", {}).items():
+            if rule_name not in dispatch_table:
+                validation_report += f"{fieldname}: unknown validation rule {rule_name}"
+            if rule_name == "limit":
+                if rule_params.get("min") is not None and rule_params.get("max") is not None:
+                    if rule_params["min"] >= rule_params["max"]:
+                        validation_report += f"{fieldname}: 'min' >= 'max' in limit\n"
+            if rule_name == "permitted_values":
+                accepted = rule_params.get("accepted_values", [])
+                forbidden = rule_params.get("forbidden_values", [])
+                overlap = set(accepted) & set(forbidden)
+                if overlap:
+                    validation_report += f"{fieldname}: 'accepted_values' and 'forbidden_values' overlap\n"
+    if len(validation_report) != 0:
+        raise RuntimeError(f"invalid schema:\n{validation_report}")
 
 def validate_config():
     '''
     Validate config settings
     '''
-    schema_valid = True
+    config_valid = True
     validation_msg = ""
-    return schema_valid, validation_msg
+    return config_valid, validation_msg
 
-def validate_database():
-    '''
-    Validate database settings
-    '''
-    schema_valid = True
-    validation_msg = ""
-    return schema_valid, validation_msg
+def validate_database(db_config):
+    try:
+        conn = psycopg2.connect(
+            host=db_config["host"],
+            port=db_config["port"],
+            dbname=db_config["name"],
+            user=db_config["user"],
+            password=db_config["password"]
+        )
+        with conn.cursor() as cursor:
+            cursor.execute(f"SELECT 1 FROM {db_config['table']} LIMIT 1;")
+        conn.close()
+    except Exception as e:
+        raise RuntimeError(f"database validation failed: {e}")
 
 # Data type maps for different database formats are defined in this section.
 

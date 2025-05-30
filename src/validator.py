@@ -9,7 +9,7 @@ def validate_data(runtime_config, schema, raw_data):
     primary_key = schema["primary_key"]
     group_reject = schema["group_reject"]
     schema_definitions = schema["schema_definitions"]
-    dispatch_table = vl.build_dispatch_table()
+    dispatch_table = vl.build_dispatch_table
 
     valid_data = []
     rejected_data = {}
@@ -60,9 +60,6 @@ def validate_data(runtime_config, schema, raw_data):
 
 def validation_engine(runtime_config, dispatch_table, rule_name, schema_rule, test_value, col_name=None, source_index=None):
     validation_func = dispatch_table.get(rule_name)
-    if not validation_func:
-        log_event(runtime_config, {"message": f"'{rule_name}' validation function not found for column '{col_name}'", "log_type": "ERROR", "log_class": "error_critical", "called_by": "validate_data"})
-        return {"valid": False, "log": True, "message": f"Unknown rule '{rule_name}'", "log_type": "ERROR", "col_name": col_name, "source_index": source_index}
     try:
         result = validation_func(schema_rule, test_value)
         result.setdefault("log_type", "INGEST")

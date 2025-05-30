@@ -9,38 +9,25 @@ import src.validation_library as vl
 from src.file_loader import load_csv
 from src.validator import validate_data
 from src.db_writer import write_to_db
-from src.logger import log_event
+from src.logger import log_event, write_to_logs
 
-def main(csv_path="sample_data/stresstest1.csv", config_path="config/config.json"):
-    # load config
-    with open(config_path, "r") as f:
-        config = json.load(f)
+def main(csv_path="sample_data/stresstest1.csv", runtime_context=""):
 
-    runtime_config = config["runtime_config"]
-    runtime_config["csv_path"] = csv_path
-    db_config = config["db_config"]
-    schema_path = config["schema_path"]
+    runtime_config = runtime_context["runtime_config"]
+    schema_path = runtime_context["schema_path"]
+    db_config = runtime_context["db_config"]
 
+    # runtime setup
     runtime_config["session_id"] = str(uuid.uuid4())
     runtime_config["log_buffer"] = []
-
+    runtime_config["csv_path"] = csv_path
     log_profile = list()
     for key, keyval in runtime_config["log_config"]["log_profile"].items():
         if keyval == True:
             log_profile.append(key)
-    
-    runtime_config["log_config"]["log_profile"] = log_profile
 
-    # TODO: vl.validate_config() will called here
-    
-    # TODO: vl.validate_database() will called here
-
-    # load schema
-    with open(schema_path, "r") as f:
-        schema = json.load(f)
-
-    # TODO: vl.validate_schema() will be called here
-    
+    # schema setup
+    schema = initialize_schema(schema_path)
     schema_keys = set(schema["schema_definitions"].keys())
 
     try:
@@ -54,7 +41,7 @@ def main(csv_path="sample_data/stresstest1.csv", config_path="config/config.json
                 "called_by": "main.py"})
             return
 
-        # Validate and clean the data
+        # Validate ~~and clean~~ the data
         cleaned_data = validate_data(runtime_config, schema, raw_data)
 
         # Write validated data to the database
@@ -73,6 +60,9 @@ def main(csv_path="sample_data/stresstest1.csv", config_path="config/config.json
             "log_class": "procedure_status",
             "called_by": "main.py"
             })
+        
+        write_to_logs(runtime_config)
+
     except Exception as e:
         crashrow = {"timestamp": datetime.now().isoformat(), "user_id": runtime_config["user_id"], "message": f"critical error: {e}", }
         crashlog_name = f"logs/CRASH_{runtime_config['session_id']}.csv"
@@ -87,6 +77,30 @@ def main(csv_path="sample_data/stresstest1.csv", config_path="config/config.json
                 writer.writerow(log_entry)
             writer.writerow(crashrow)
         print(f"critical error: {e}\ncrash log written to {crashlog_name}")
+
+def initialize_config(config_path="config/config.json"):
+    runtime_context = {}
+    with open(config_path, "r") as f:
+        config = json.load(f)
+
+    runtime_context["runtime_config"] = config["runtime_config"]
+    runtime_context["db_config"] = config["db_config"]
+    runtime_context["schema_path"] = config["schema_path"]
+
+    # TODO: vl.validate_config() will be called here
+    
+    vl.validate_database(runtime_context["db_config"])
+
+    return runtime_context    
+
+def initialize_schema(schema_path):
+    schema = {}
+    with open(schema_path, "r") as f:
+        schema = json.load(f)
+
+    vl.validate_schema(schema)
+
+    return schema
 
 if __name__ == "__main__":
     # Accept a filepath as a command-line argument, fallback to default
