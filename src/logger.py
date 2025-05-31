@@ -35,6 +35,7 @@ def write_to_logs(runtime_config):
     log_config = runtime_config["log_config"]
     logs_by_type = {"INGEST": {"fieldnames": set(), "data_rows": list()},
                     "ERROR": {"fieldnames": set(), "data_rows": list()},
+                    "EVENT": {"fieldnames": set(), "data_rows": list()},
                     "EXCEPTION": {"fieldnames": set(), "data_rows": list()}
                     }
     log_buffer = runtime_config["log_buffer"]
@@ -48,9 +49,9 @@ def write_to_logs(runtime_config):
             logs_by_type[log_entry["log_type"]]["data_rows"].append(log_entry)
             if log_config["merge_logs"]:
                 logs_by_type["MERGED"]["fieldnames"].update(log_entry.keys())
-                logs_by_type["MERGED"]["data_rows"].update(log_entry.keys())
+                logs_by_type["MERGED"]["data_rows"].append(log_entry)
 
-    for compiled_log, log_data in logs_by_type:
+    for compiled_log, log_data in logs_by_type.items():
         log_file = log_config["log_filename"].format(session_id=runtime_config["session_id"], log_type=compiled_log)
         headers = list(log_data["fieldnames"])
         with open(log_file, mode="w", newline="") as file:

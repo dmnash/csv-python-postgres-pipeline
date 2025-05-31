@@ -7,9 +7,8 @@
         "required": true,
         "data_type": "TEXT",
         "format": "^\\d{3}-\\d{4}-\\d{3}-\\d{14}$",
-        "permitted_value": {
-          "accepted_value": null,
-          "forbidden_value": ["UNKNOWN", "N/A"]
+        "value_restrictions": {
+          "FORBID": ["UNKNOWN", "N/A"]
         }
       }
     },
@@ -49,8 +48,7 @@
     "order_date": {
       "rules": {
         "required": true,
-        "data_type": "TEXT",
-        "format": "^\\d{4}-\\d{2}-\\d{2}$"
+        "data_type": "TEXT"
       }
     },
     "shipping_method": {

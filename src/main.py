@@ -3,15 +3,15 @@
 import sys
 import json
 import uuid
-import datetime
 import csv
 import src.validation_library as vl
+from datetime import datetime
 from src.file_loader import load_csv
 from src.validator import validate_data
 from src.db_writer import write_to_db
 from src.logger import log_event, write_to_logs
 
-def main(csv_path="sample_data/stresstest1.csv", runtime_context=""):
+def main(csv_path="", runtime_context=""):
 
     runtime_config = runtime_context["runtime_config"]
     schema_path = runtime_context["schema_path"]
@@ -25,6 +25,7 @@ def main(csv_path="sample_data/stresstest1.csv", runtime_context=""):
     for key, keyval in runtime_config["log_config"]["log_profile"].items():
         if keyval == True:
             log_profile.append(key)
+    runtime_config["log_config"]["log_profile"] = log_profile
 
     # schema setup
     schema = initialize_schema(schema_path)

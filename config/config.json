@@ -6,12 +6,12 @@
         "drop_extra_cols": true,
         "csv_path": "",
         "log_config": {
-            "log_to_console": true,
+            "log_to_console": false,
             "merge_logs": true,
             "log_filename": "logs/{session_id}_{log_type}_LOG.csv",
             "log_profile": {
                 "validation_reject": true,
-                "validation_warn": true,
+                "validation_warn": false,
                 "validation_accept": false,
                 "error_critical": true,
                 "error_minor": true,

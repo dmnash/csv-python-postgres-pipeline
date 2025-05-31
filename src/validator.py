@@ -9,7 +9,7 @@ def validate_data(runtime_config, schema, raw_data):
     primary_key = schema["primary_key"]
     group_reject = schema["group_reject"]
     schema_definitions = schema["schema_definitions"]
-    dispatch_table = vl.build_dispatch_table
+    dispatch_table = vl.build_dispatch_table()
 
     valid_data = []
     rejected_data = {}
@@ -35,10 +35,11 @@ def validate_data(runtime_config, schema, raw_data):
 
                 for rule_name, schema_rule in rules.items():
                     result = validation_engine(runtime_config, dispatch_table, rule_name, schema_rule, test_value, col_name, row["source_index"])
-                    if not result["valid"]:
+                    if not result["valid"]==True and row_rejected==False:
                         row_rejected = True
                         if group_reject:
                             group_reject_reason += f"{result['message']}\n"
+                            group_rejected = True
                         if cascade_reject:
                             break
                             
@@ -50,7 +51,7 @@ def validate_data(runtime_config, schema, raw_data):
 
             if not row_rejected and not group_reject:
                 valid_data.append(row.to_frame().T)
-
+            
         if group_reject:
             if not group_rejected:
                 valid_data.append(group)
@@ -65,7 +66,7 @@ def validation_engine(runtime_config, dispatch_table, rule_name, schema_rule, te
         result.setdefault("log_type", "INGEST")
         result.setdefault("col_name", col_name)
         result.setdefault("source_index", source_index)
-        result["message"] = f"row {result['source_index']} rejected at {result['col_name']}: {result['message']}"
+        result["message"] = f"row {result['source_index']} {'accepted' if result['valid'] else 'rejected'} at {result['col_name']}: {result['message']}"
         log_event(runtime_config, result)
         return result
     except Exception as e:

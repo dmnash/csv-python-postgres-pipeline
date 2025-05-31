@@ -1,12 +1,13 @@
 # run_ingestor.py
 
 import argparse
+import sys
 from src.main import main, initialize_config
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Run the CSV Ingestion Engine.")
-    parser.add_argument("--csv", type=str, help="Path to CSV file", default="sample_data/stresstest1.csv")
-    parser.add_argument("--config", type=str, help="Path to config.json", default="config/config.json")
+    parser.add_argument("--csv", type=str, help="Path to CSV file", default="")
+    parser.add_argument("--config", type=str, help="Path to config.json", default="")
     return parser.parse_args()
 
 if __name__ == "__main__":
@@ -16,3 +17,4 @@ if __name__ == "__main__":
         main(csv_path=args.csv, runtime_context=configs)
     except Exception as e:
         print(f"Critical error: {e}")
+        sys.exit(1)
