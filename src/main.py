@@ -65,7 +65,10 @@ def main(csv_path="", runtime_context=""):
         write_to_logs(runtime_config)
 
     except Exception as e:
-        crashrow = {"timestamp": datetime.now().isoformat(), "user_id": runtime_config["user_id"], "message": f"critical error: {e}", }
+        crashrow = {"timestamp": datetime.now().isoformat(), 
+                    "user_id": runtime_config["user_id"], 
+                    "message": f"critical error: {e}", 
+                    }
         crashlog_name = f"logs/CRASH_{runtime_config['session_id']}.csv"
         log_buffer = runtime_config["log_buffer"]
         fieldnames = ["timestamp","message"]

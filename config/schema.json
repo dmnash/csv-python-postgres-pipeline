@@ -1,5 +1,5 @@
 {
-  "primary_key": "order_id",
+  "sort_key": "order_id",
   "group_reject": false,
   "schema_definitions": {
     "order_id": {

@@ -6,7 +6,7 @@ from src.logger import log_event
 
 def validate_data(runtime_config, schema, raw_data):
     cascade_reject = runtime_config["cascade_reject"]
-    primary_key = schema["primary_key"]
+    sort_key = schema["sort_key"]
     group_reject = schema["group_reject"]
     schema_definitions = schema["schema_definitions"]
     dispatch_table = vl.build_dispatch_table()
@@ -14,17 +14,31 @@ def validate_data(runtime_config, schema, raw_data):
     valid_data = []
     rejected_data = {}
 
-    null_key_rows = raw_data[raw_data[primary_key].isnull()]
+    null_key_rows = raw_data[raw_data[sort_key].isnull()]
     if not null_key_rows.empty:
-        log_event(runtime_config, {"message": "Null key rows dropped:","log_type": "INGEST","log_class": "info_detailed","called_by": "validate_data"})
+        log_event(runtime_config, {"message": "Null key rows dropped:",
+                                   "log_type": "INGEST",
+                                   "log_class": "info_detailed",
+                                   "called_by": "validate_data"
+                                   }
+                                )
         for idx, row in null_key_rows.iterrows():
-            log_event(runtime_config, {"message": row["source_index"],"log_type": "INGEST","log_class": "info_detailed","called_by": "validate_data"})
-        log_event(runtime_config, {"message": "==end null key rows==","log_type": "INGEST","log_class": "info_detailed","called_by": "validate_data"})
-    grouped_data = raw_data.groupby(primary_key)
+            log_event(runtime_config, {"message": row["source_index"],
+                                       "log_type": "INGEST",
+                                       "log_class": "info_detailed",
+                                       "called_by": "validate_data"
+                                       }
+                                    )
+        log_event(runtime_config, {"message": "==end null key rows==",
+                                   "log_type": "INGEST",
+                                   "log_class": "info_detailed",
+                                   "called_by": "validate_data"}
+                                )
+    grouped_data = raw_data.groupby(sort_key)
 
-    for primary_key_value, group in grouped_data:
+    for sort_key_value, group in grouped_data:
         group_rejected = False
-        group_reject_reason = f"group {primary_key_value} rejected:\n"
+        group_reject_reason = f"group {sort_key_value} rejected:\n"
 
         for idx, row in group.iterrows():
             row_rejected = False
@@ -56,7 +70,11 @@ def validate_data(runtime_config, schema, raw_data):
             if not group_rejected:
                 valid_data.append(group)
     
-    log_event(runtime_config, {"message": "Validation module called","log_type": "EVENT","log_class": "info_general","called_by": "validate_data"})
+    log_event(runtime_config, {"message": "Validation module called",
+                               "log_type": "EVENT",
+                               "log_class": "info_general",
+                               "called_by": "validate_data"}
+                            )
     return pd.concat(valid_data) if valid_data else pd.DataFrame()
 
 def validation_engine(runtime_config, dispatch_table, rule_name, schema_rule, test_value, col_name=None, source_index=None):
